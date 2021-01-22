@@ -234,9 +234,9 @@
             console.log(blocks);
             blocks.forEach(row => {
                 row.forEach(block => {
-                    if (ball.x > block.x && ball.x < block.x + block.width) {
+                    if (ball.x + speedX > block.x && ball.x + speedX < block.x + block.width) {
                         speedX = 0;
-                    } else if (ball.y > block.y && ball.y < block.y + block.height) {
+                    } else if (ball.y + speedY > block.y && ball.y + speedY < block.y + block.height) {
                         speedY = 0;
                     }
                 });
