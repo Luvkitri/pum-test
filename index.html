@@ -233,17 +233,18 @@
             // circle - rectangle
             blocks.forEach(row => {
                 row.forEach(block => {
-                    let distX = Math.abs(ball.x - block.x - block.width / 2);
-                    let distY = Math.abs(ball.y - block.y - block.height / 2);
-
-                    if (distX > (block.width / 2 + ball.radius)) { return; }
-                    if (distY > (block.height / 2 + ball.radius)) { return; }
-
-                    if (distX <= (block.width / 2)) { 
-                        speedX = 0; 
+                    if (ball.x + speedX > block.width - ball.radius || ball.x + speedX < ball.radius) {
+                        speedX = 0;
                     }
-                    if (distY <= (block.height / 2)) {
-                        speedY = 0;
+
+                    if (ball.y + speedY < ball.radius) {
+                        if (speedY > 0) {
+                            speedY = 0;
+                        }
+                    } else if (ball.y + speedY > block.height - ball.radius) {
+                        if (speedY < 0) {
+                            speedY = 0;
+                        }
                     }
                 });
             });
