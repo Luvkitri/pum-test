@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5">
+    <title>Task 1</title>
+    <canvas id="myCanvas" width="800" height="600" style="border:1px solid #d3d3d3;">
+        Your browser does not support the HTML canvas tag.</canvas>
+    <style>
+
+    </style>
+</head>
+
+<body style="width: 100%;">
+    <pre class="output"></pre>
+    <script>
+        let canvas, context;
+        let key;
+        let lastPress = 0;
+        let score = 0;
+        let isDriving = false;
+
+        // spawn locations
+        let maxX = 465;
+        let maxY = -25;
+        let minX = 200;
+        let minY = -100;
+
+        class Ball {
+            constructor(x, y, color) {
+                this.radius = 10;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+            }
+
+            drawBall() {
+                context.beginPath();
+                context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+                context.fillStyle = this.color;
+                context.fill();
+            }
+
+            move(dx, dy) {
+                this.x += dx;
+                this.y += -dy;
+            }
+        }
+
+        class Block {
+            constructor(x, y, color) {
+                this.height = 50;
+                this.width = 50;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+            }
+
+            drawBlock() {
+                context.beginPath();
+                context.fillStyle = this.color;
+                context.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        let board = [
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1],
+            [1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0],
+            [1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0],
+            [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 1, -1, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+        ];
+
+        // Game objects
+        let ball = new Ball(20, 20, 'green');
+        let finish = new Ball(475, 475, 'red');
+        let blocks = initBlocks();
+
+        let speedX = 0;
+        let speedY = 0;
+        let landscapeOrientation = false;
+
+        window.onload = init;
+
+        // Key Press Envents
+        var keyPressed = {};
+        document.addEventListener('keydown', function (e) {
+            keyPressed[e.keyCode] = true;
+
+            if (keyPressed.Shift1 == true && keyPressed.Control1 == true) {
+                // Left shift+CONTROL pressed!
+                keyPressed = {}; // reset key map
+            }
+            if (keyPressed.Shift2 == true && keyPressed.Control2 == true) {
+                // Right shift+CONTROL pressed!
+                keyPressed = {};
+            }
+
+        }, false);
+
+        document.addEventListener('keyup', function (e) {
+            keyPressed[e.keyCode] = false;
+            // keyPressed = {};
+        }, false);
+
+        // Init function
+        function init() {
+            // Load Canvas
+            canvas = document.querySelector('#myCanvas');
+            context = canvas.getContext('2d');
+
+            // Add Orientatino Listener
+            window.addEventListener('orientationchange', checkOrientation, true);
+            checkOrientation();
+
+            requestAnimationFrame(animate);
+        }
+
+        function initBlocks() {
+            let blocks = [];
+
+            for (let i = 0; i < board.length; i++) {
+                let temp = [];
+                for (let j = 0; j < board[i].length; j++) {
+                    if (board[i][j] === 1) {
+                        let block = new Block(j * 50, i * 50, 'black');
+                        temp.push(block);
+                    }
+                }
+                blocks.push(temp);
+            }
+
+            return blocks;
+        }
+
+        // Check For Orientation
+        window.onorientationchange = checkOrientation;
+
+        function checkOrientation() {
+            switch (window.orientation) {
+                case 0:
+                    landscapeOrientation = false;
+                    break;
+                case 180:
+                    landscapeOrientation = false;
+                    break;
+                case -90:
+                    landscapeOrientation = true;
+                    break;
+                case 90:
+                    landscapeOrientation = true;
+                    break;
+            }
+        }
+
+        let output = document.querySelector('.output');
+
+        function onClick() {
+            // feature detect
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation, true);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Accelerometer
+                window.addEventListener("deviceorientation", handleOrientation, true);
+            }
+        }
+
+        function handleOrientation(event) {
+            let valueX;
+            let valueY;
+
+            if (landscapeOrientation) {
+                valueX = event.beta;
+                valueY = event.gamma
+            } else {
+                valueX = event.gamma;
+                valueY = event.beta;
+            }
+
+            speedX = 0.1 * valueX;
+            speedY = -0.1 * valueY;
+            output.innerHTML = "valueX: " + speedX + "\n";
+            output.innerHTML = "ValueY: " + speedY + "\n";
+        }
+
+        function updatePosition() {
+            ball.move(speedX, speedY)
+        }
+
+        function stripAnimation() {
+            firstStrip += Math.round(roadSpeed);
+            stripes.forEach(strip => {
+                strip.y += Math.round(roadSpeed);
+                if (firstStrip >= secondStrip) {
+                    stripes = [new Strip(-100), new Strip(0), new Strip(100), new Strip(200), new Strip(300), new Strip(400), new Strip(500)];
+                    firstStrip = -100;
+                }
+            });
+        }
+
+        function sideAnimation() {
+            firstSideStrip += Math.round(roadSpeed);
+            leftSideStripes.forEach(leftSideStrip => {
+                leftSideStrip.y += Math.round(roadSpeed);
+            });
+
+            rightSideStripes.forEach(rightSideStrip => {
+                rightSideStrip.y += Math.round(roadSpeed);
+            });
+
+            if (firstSideStrip >= secondSideStrip) {
+                initSideStripes();
+                firstSideStrip = -100;
+            }
+        }
+
+        // TODO FIX 
+        function blocksCollisionCheck() {
+            // circle - rectangle
+            blocks.forEach(row => {
+                row.forEach(block => {
+                    let distX = Math.abs(ball.x - block.x - block.width / 2);
+                    let distY = Math.abs(ball.y - block.y - block.height / 2);
+
+                    if (distX > (block.width / 2 + ball.radius)) { return; }
+                    if (distY > (block.height / 2 + ball.radius)) { return; }
+
+                    if (distX <= (block.width / 2)) { 
+                        speedX = 0; 
+                    }
+                    if (distY <= (block.height / 2)) {
+                        speedY = 0;
+                    }
+                });
+            });
+        }
+
+        function canvasCollisionCheck() {
+            if (ball.x + speedX > canvas.width - ball.radius || ball.x + speedX < ball.radius) {
+                speedX = 0;
+            }
+
+            if (ball.y + speedY < ball.radius) {
+                if (speedY > 0) {
+                    speedY = 0;
+                }
+            } else if (ball.y + speedY > canvas.height - ball.radius) {
+                if (speedY < 0) {
+                    speedY = 0;
+                }
+            }
+        }
+
+        function drawBlocks() {
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[i].length; j++) {
+                    if (board[i][j] === 1) {
+                        let block = new Block(j * 50, i * 50, 'black');
+                        block.drawBlock();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            context.clearRect(0, 0, 800, 600);
+
+            // Draw Game Elements
+            ball.drawBall();
+            finish.drawBall();
+            drawBlocks();
+
+            canvasCollisionCheck();
+            updatePosition();
+
+
+            requestAnimationFrame(animate);
+        }
+    </script>
+    <br>
+    <button onmousedown="onClick()"
+        style="width: 100%; height: 100px; background-color: rgb(36, 35, 35); color: white;">START GAME</button>
+</body>
+
+</html>
