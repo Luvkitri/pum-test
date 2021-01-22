@@ -46,6 +46,11 @@
                 this.x += dx;
                 this.y += -dy;
             }
+
+            setPrevPos(dx, dy) {
+                this.x -= dx
+                this.y -= -dy
+            }
         }
 
         class Block {
@@ -199,6 +204,10 @@
 
         function updatePosition() {
             ball.move(speedX, speedY)
+
+            if (blocksCollisionCheck()) {
+                ball.setPrevPos(speedX, speedY);
+            }
         }
 
         function stripAnimation() {
@@ -236,15 +245,19 @@
                     let distX = Math.abs(ball.x - block.x - block.width / 2);
                     let distY = Math.abs(ball.y - block.y - block.height / 2);
 
-                    if (distX > (block.width / 2 + ball.radius)) { return; }
-                    if (distY > (block.height / 2 + ball.radius)) { return; }
+                    if (distX > (block.width / 2 + ball.radius)) { return false; }
+                    if (distY > (block.height / 2 + ball.radius)) { return false; }
 
-                    if (distX <= (block.width / 2)) { 
-                        speedX *= -1; 
+                    if (distX <= (block.width / 2)) {
+                        return true;
                     }
                     if (distY <= (block.height / 2)) {
-                        speedY *= -1; 
+                        return true;
                     }
+
+                    let dx = distX - block.width / 2;
+                    let dy = distY - block.height / 2;
+                    return (dx * dx + dy * dy <= (ball.radius * ball.radius));
                 });
             });
         }
@@ -285,7 +298,6 @@
             drawBlocks();
 
             canvasCollisionCheck();
-            blocksCollisionCheck();
             updatePosition();
 
 
