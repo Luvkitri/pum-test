@@ -231,20 +231,13 @@
         // TODO FIX 
         function blocksCollisionCheck() {
             // circle - rectangle
+            console.log(blocks);
             blocks.forEach(row => {
                 row.forEach(block => {
-                    if (ball.x + speedX > block.width - ball.radius || ball.x + speedX < ball.radius) {
+                    if (ball.x > block.x && ball.x < block.x + block.width) {
                         speedX = 0;
-                    }
-
-                    if (ball.y + speedY < ball.radius) {
-                        if (speedY > 0) {
-                            speedY = 0;
-                        }
-                    } else if (ball.y + speedY > block.height - ball.radius) {
-                        if (speedY < 0) {
-                            speedY = 0;
-                        }
+                    } else if (ball.y > block.y && ball.y < block.y + block.height) {
+                        speedY = 0;
                     }
                 });
             });
